@@ -1,7 +1,7 @@
 ####################################################
 #
 #TEMPORAL ALLELE VARIBILITY
-#Last Version September 2019
+#Last Version JULY 2020
 #Sara Beier, Leibniz Institute for Baltic Sea Research
 #
 ####################################################
@@ -34,13 +34,10 @@ example: TableS5.tab as published in Beier et al." ,sep="\n")
 #counts <- read.table("/Users/sara/Documents/Manuscripts/LTG/countdata/counts.men.tab", header=T, sep ='\t') #upload count data as provided in supplmentary data x/y/z
 counts <- read.table("counts.tab", header=T)
 names(counts)[1:2] <- c('ortholog.id','allele.id')
-rich.allele <- as.data.frame(table (counts$ortholog.id)) #total allel richness
 
 info <- read.table("TableS5.tab", header=T, sep='\t')[,c(1,9,10,11)]#upload information about subcellular location, average gene copy nr and the frequency (occurence) of gene orthologs in prokaryotes as provided in Table S3
 colnames (info) <- c("ortholog.id", "loc","copy", "occurence")
 info <- info[info$occurence<0.67,] #keep auxiliary genes
-info <- merge(info,rich.allele,by.x='ortholog.id', by.y='Var1')
-info$meta <- info$Freq/info$copy #estimate metacommunity size for genes
 
 counts.K <- aggregate(. ~ ortholog.id, data=counts[,c(1,3:dim(counts)[2])], FUN=sum) #KEGG counts
 counts.K$min <- apply(counts.K[,2:dim(counts.K)[2]],1,min)
@@ -67,12 +64,14 @@ mylist <- foreach(j=1:n.boot) %dopar% {
     group <- rep(levels(counts.Kmin$ortholog.id)[i],dim(sub )[2]) #define groups to estimate betadispersion
     mod1 <- betadisper(dis, group) #estimate betadispersion
     d <- data.frame(mod1$distances, mod1$group)
+    d$Freq <- dim(sub)[1]  #total allel richness in subsampled file
     datalist[[i]] <- d
   }
   mod.ds <- do.call(rbind, datalist)
-  colnames(mod.ds) <- c("allele.variability","ortholog.id")
+  colnames(mod.ds) <- c("allele.variability","ortholog.id","rich")
   beta.j <- aggregate(. ~ ortholog.id, data=mod.ds, FUN=mean) #aggregate sample distance to centroid for each gene ortholog by mean
   beta.j <- merge (beta.j, info, by.x="ortholog.id",by.y="ortholog.id") #add information about subcellular location, average gene copy number and occurence to dataframe
+  beta.j$meta <- beta.j$rich/beta.j$copy  #estimate seaonal metacommunity size for genes by normalizing total allele richness by gene copy number
   beta.sub <- beta.j[beta.j$loc %in% c('cytoplasmatic', 'non-cytoplasmatic'),] #only include cases with defined subcellular location for statistics
   
   #type III ANCOVA
