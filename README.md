@@ -1,4 +1,4 @@
-# allele.varibility
+# allele.variability
 The Rscript allele.variability.R quantifies allele variability of KEGG annotated gene orthologs across multiple metagenome data and estimate the influence of meta community size, average per cell gene copy number and sub cellular location on allele variability using bootstrapped statistics as detailed in Beier et al. 2020.
 
 #### Parameters to set:
